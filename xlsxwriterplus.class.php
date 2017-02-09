@@ -8,12 +8,28 @@ class XLSWriterPlus extends XLSXWriter
     private $images = [];
 
     /**
+     * @var array
+     */
+    private $imageOptions = [];
+
+    /**
      * @param string $imagePath
+     * @param array $imageOptions
      * @param int $imageId
      */
-    public function addImage($imagePath, $imageId)
+    public function addImage($imagePath, $imageId, $imageOptions = [])
     {
         $this->images[$imageId] = $imagePath;
+
+        if(empty($imageOptions)){
+            $imageOptions = [
+                'startColNum' => 0,
+                'endColNum' => 0,
+                'startRowNum' => 0,
+                'endRowNum' => 0
+            ];
+        }
+        $this->imageOptions[$imageId] = $imageOptions;
     }
 
     public function writeToString()
@@ -81,9 +97,8 @@ class XLSWriterPlus extends XLSXWriter
         $zip->addEmptyDir("xl/worksheets/_rels/");
 
         foreach ($this->sheets as $sheet) {
-            $zip->addFromString("xl/worksheets/_rels/" . $sheet->xmlname . '.rels', $this->buildDrawingRelationshipXML());
-
             $zip->addFile($sheet->filename, "xl/worksheets/" . $sheet->xmlname);
+            $zip->addFromString("xl/worksheets/_rels/" . $sheet->xmlname . '.rels', $this->buildSheetRelationshipXML());
         }
 
         $zip->addFromString("xl/workbook.xml", $this->buildWorkbookXML());
@@ -98,32 +113,32 @@ class XLSWriterPlus extends XLSXWriter
     /**
      * @param string $imagePath
      * @param int $imageId
-     * @param int $startRowNum
-     * @param int $endRowNum
-     * @param int $startColNum
-     * @param int $endColNum
      * @return string
      */
-    public function buildDrawingXML($imagePath, $imageId, $startRowNum = 0, $endRowNum = 0, $startColNum = 0, $endColNum = 0)
+    public function buildDrawingXML($imagePath, $imageId)
     {
         $imageName = explode('/', $imagePath);
         $imageName = end($imageName);
 
-        $imageRelationshipXML = '
-            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        $imageOptions = $this->imageOptions[$imageId];
+        list($width, $height) = getimagesize($imagePath);
+        $width *= 1000;
+        $height *= 1000;
+
+        $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:dgm="http://schemas.openxmlformats.org/drawingml/2006/diagram">
                 <xdr:twoCellAnchor>
                     <xdr:from>
-                        <xdr:col>' . $startColNum . '</xdr:col>
-                        <xdr:colOff>247650</xdr:colOff>
-                        <xdr:row>' . $startRowNum . '</xdr:row>
-                        <xdr:rowOff>76200</xdr:rowOff>
+                        <xdr:col>' . $imageOptions['startColNum'] . '</xdr:col>
+                        <xdr:colOff>0</xdr:colOff>
+                        <xdr:row>' . $imageOptions['startRowNum'] . '</xdr:row>
+                        <xdr:rowOff>0</xdr:rowOff>
                     </xdr:from>
                     <xdr:to>
-                        <xdr:col>' . $endColNum . '</xdr:col>
-                        <xdr:colOff>381000</xdr:colOff>
-                        <xdr:row>' . $endRowNum . '</xdr:row>
-                        <xdr:rowOff>142875</xdr:rowOff>
+                        <xdr:col>' . $imageOptions['endColNum'] . '</xdr:col>
+                        <xdr:colOff>' . $width . '</xdr:colOff>
+                        <xdr:row>' . $imageOptions['endRowNum'] . '</xdr:row>
+                        <xdr:rowOff>' . $height . '</xdr:rowOff>
                     </xdr:to>
                     <xdr:pic>
                         <xdr:nvPicPr>
@@ -138,7 +153,7 @@ class XLSWriterPlus extends XLSXWriter
                         </xdr:blipFill>
                         <xdr:spPr>
                             <a:xfrm>
-                                <a:ext cx="2419350" cy="790575" />
+                                <a:ext cx="' . $width . '" cy="' . $height . '" />
                             </a:xfrm>
                             <a:prstGeom prst="rect">
                                 <a:avLst />
@@ -152,26 +167,6 @@ class XLSWriterPlus extends XLSXWriter
         ';
 
         return $imageRelationshipXML;
-    }
-
-    /**
-     * @return string
-     */
-    public function buildDrawingRelationshipXML()
-    {
-        $drawingXML = '<?xml version="1.0" encoding="UTF-8"?>
-            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
-
-        foreach ($this->images as $imageId => $imagePath) {
-            $imageName = explode('/', $imagePath);
-            $imageName = end($imageName);
-
-            $drawingXML .= '<Relationship Id="rId' . $imageId . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/' . $imageName . '"/>';
-        }
-
-        $drawingXML .= '</Relationships>';
-
-        return $drawingXML;
     }
 
     /**
@@ -264,6 +259,49 @@ class XLSWriterPlus extends XLSXWriter
         if (count($this->images) > 0) {
             foreach ($this->images as $imageId => $imagePath) {
                 $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="xl/drawings/drawing' . $imageId . '.xml" />';
+            }
+        }
+
+        $rels_xml .= "\n";
+        $rels_xml .= '</Relationships>';
+
+        return $rels_xml;
+    }
+
+    /**
+     * @return string
+     */
+    public function buildDrawingRelationshipXML()
+    {
+        $drawingXML = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $drawingXML .= '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+
+        foreach ($this->images as $imageId => $imagePath) {
+            $imageName = explode('/', $imagePath);
+            $imageName = end($imageName);
+
+            $drawingXML .= '<Relationship Id="rId' . $imageId . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/' . $imageName . '"/>';
+        }
+
+        $drawingXML .= "\n" . '</Relationships>';
+
+        return $drawingXML;
+    }
+
+    /**
+     * @return string
+     */
+    public function buildSheetRelationshipXML()
+    {
+        $lastRelationshipId = 0;
+
+        $rels_xml = "";
+        $rels_xml .= '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $rels_xml .= '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+
+        if (count($this->images) > 0) {
+            foreach ($this->images as $imageId => $imagePath) {
+                $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing' . $imageId . '.xml"/>';
             }
         }
 
