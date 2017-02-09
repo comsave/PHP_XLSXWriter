@@ -1,5 +1,5 @@
 {
-    "name": "Gyvastis/php_xlsxwriter",
+    "name": "comsavewebservice/php_xlsxwriter",
     "description": "PHP Library to write XLSX files",
     "keywords": ["php", "library", "xls", "xlsx", "excel"],
     "type": "project",
