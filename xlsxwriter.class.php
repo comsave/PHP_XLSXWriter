@@ -276,7 +276,7 @@ class XLSXWriter
 
         $this->initializeSheet($sheet_name);
         $sheet = &$this->sheets[$sheet_name];
-        w
+        
         $startCell = $this->xlsCell($start_cell_row, $start_cell_column);
         $endCell = $this->xlsCell($end_cell_row, $end_cell_column);
         $sheet->merge_cells[] = $startCell . ":" . $endCell;
