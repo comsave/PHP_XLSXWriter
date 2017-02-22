@@ -117,14 +117,8 @@ class XLSWriterPlus extends XLSXWriter
      */
     public function buildDrawingXML($imagePath, $imageId)
     {
-        $imageName = explode('/', $imagePath);
-        $imageName = end($imageName);
-
         $imageOptions = $this->imageOptions[$imageId];
         list($width, $height) = getimagesize($imagePath);
-        $width *= 1000;
-//        $height *= 1000;
-        $height *= 800;
 
         $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <xdr:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
