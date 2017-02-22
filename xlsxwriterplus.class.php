@@ -126,7 +126,7 @@ class XLSWriterPlus extends XLSXWriter
         $height *= 1000;
 
         $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-            <xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:dgm="http://schemas.openxmlformats.org/drawingml/2006/diagram">
+            <xdr:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
                 <xdr:twoCellAnchor>
                     <xdr:from>
                         <xdr:col>' . $imageOptions['startColNum'] . '</xdr:col>
@@ -142,11 +142,17 @@ class XLSWriterPlus extends XLSXWriter
                     </xdr:to>
                     <xdr:pic>
                         <xdr:nvPicPr>
-                            <xdr:cNvPr id="0" name="' . $imageName . '" title="Image" />
+                            <xdr:cNvPr id="' . $imageId . '" name="Picture ' . $imageId . '" />
                             <xdr:cNvPicPr preferRelativeResize="0" />
                         </xdr:nvPicPr>
                         <xdr:blipFill>
-                            <a:blip cstate="print" r:embed="rId' . $imageId . '" />
+                            <a:blip r:embed="rId' . $imageId . '">
+                              <a:extLst>
+                                <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
+                                  <a14:useLocalDpi val="0"/>
+                                </a:ext>
+                              </a:extLst>
+                            </a:blip>
                             <a:stretch>
                                 <a:fillRect />
                             </a:stretch>
@@ -161,7 +167,7 @@ class XLSWriterPlus extends XLSXWriter
                             <a:noFill />
                         </xdr:spPr>
                     </xdr:pic>
-                    <xdr:clientData fLocksWithSheet="0" />
+                    <xdr:clientData />
                 </xdr:twoCellAnchor>
             </xdr:wsDr>
         ';
@@ -240,32 +246,6 @@ class XLSWriterPlus extends XLSXWriter
         $sheet->file_writer->write($max_cell_tag . str_repeat(" ", $padding_length));
         $sheet->file_writer->close();
         $sheet->finalized = true;
-    }
-
-    /**
-     * @return string
-     */
-    protected function buildRelationshipsXML()
-    {
-        $lastRelationshipId = 0;
-
-        $rels_xml = "";
-        $rels_xml .= '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $rels_xml .= '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
-        $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>';
-        $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>';
-        $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>';
-
-        if (count($this->images) > 0) {
-            foreach ($this->images as $imageId => $imagePath) {
-                $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="xl/drawings/drawing' . $imageId . '.xml" />';
-            }
-        }
-
-        $rels_xml .= "\n";
-        $rels_xml .= '</Relationships>';
-
-        return $rels_xml;
     }
 
     /**
