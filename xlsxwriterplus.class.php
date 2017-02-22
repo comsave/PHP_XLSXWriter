@@ -123,7 +123,8 @@ class XLSWriterPlus extends XLSXWriter
         $imageOptions = $this->imageOptions[$imageId];
         list($width, $height) = getimagesize($imagePath);
         $width *= 1000;
-        $height *= 1000;
+//        $height *= 1000;
+        $height *= 800;
 
         $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <xdr:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
@@ -142,8 +143,10 @@ class XLSWriterPlus extends XLSXWriter
                     </xdr:to>
                     <xdr:pic>
                         <xdr:nvPicPr>
-                            <xdr:cNvPr id="' . $imageId . '" name="Picture ' . $imageId . '" />
-                            <xdr:cNvPicPr preferRelativeResize="0" />
+                            <xdr:cNvPr id="2" name="Picture ' . $imageId . '" />
+                            <xdr:cNvPicPr>
+                              <a:picLocks noChangeAspect="1"/>
+                            </xdr:cNvPicPr>
                         </xdr:nvPicPr>
                         <xdr:blipFill>
                             <a:blip r:embed="rId' . $imageId . '">
@@ -153,18 +156,15 @@ class XLSWriterPlus extends XLSXWriter
                                 </a:ext>
                               </a:extLst>
                             </a:blip>
-                            <a:stretch>
-                                <a:fillRect />
-                            </a:stretch>
                         </xdr:blipFill>
                         <xdr:spPr>
                             <a:xfrm>
+                                <a:off x="0" y="0"/>
                                 <a:ext cx="' . $width . '" cy="' . $height . '" />
                             </a:xfrm>
                             <a:prstGeom prst="rect">
                                 <a:avLst />
                             </a:prstGeom>
-                            <a:noFill />
                         </xdr:spPr>
                     </xdr:pic>
                     <xdr:clientData />
@@ -224,12 +224,6 @@ class XLSWriterPlus extends XLSXWriter
             $sheet->file_writer->write('</mergeCells>');
         }
 
-        if (count($this->images) > 0) {
-            foreach ($this->images as $imageId => $imagePath) {
-                $sheet->file_writer->write('<drawing r:id="rId' . $imageId . '" />');
-            }
-        }
-
         $sheet->file_writer->write('<printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"/>');
         $sheet->file_writer->write('<pageMargins left="0.5" right="0.5" top="1.0" bottom="1.0" header="0.5" footer="0.5"/>');
         $sheet->file_writer->write('<pageSetup blackAndWhite="false" cellComments="none" copies="1" draft="false" firstPageNumber="1" fitToHeight="1" fitToWidth="1" horizontalDpi="300" orientation="portrait" pageOrder="downThenOver" paperSize="1" scale="100" useFirstPageNumber="true" usePrinterDefaults="false" verticalDpi="300"/>');
@@ -237,6 +231,12 @@ class XLSWriterPlus extends XLSXWriter
         $sheet->file_writer->write('<oddHeader>&amp;C&amp;&quot;Times New Roman,Regular&quot;&amp;12&amp;A</oddHeader>');
         $sheet->file_writer->write('<oddFooter>&amp;C&amp;&quot;Times New Roman,Regular&quot;&amp;12Page &amp;P</oddFooter>');
         $sheet->file_writer->write('</headerFooter>');
+
+        if (count($this->images) > 0) {
+            foreach ($this->images as $imageId => $imagePath) {
+                $sheet->file_writer->write('<drawing r:id="rId' . $imageId . '" />');
+            }
+        }
         $sheet->file_writer->write('</worksheet>');
 
         $max_cell = $this->xlsCell($sheet->row_count - 1, count($sheet->columns) - 1);
