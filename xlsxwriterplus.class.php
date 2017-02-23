@@ -117,8 +117,15 @@ class XLSWriterPlus extends XLSXWriter
      */
     public function buildDrawingXML($imagePath, $imageId)
     {
+        $cellWidth = 875000;
+        $cellHeight = 170000;
+
         $imageOptions = $this->imageOptions[$imageId];
         list($width, $height) = getimagesize($imagePath);
+        $ratio = $width / $height;
+
+        $offsetX = round($cellWidth * ($ratio - floor($ratio))) + 115000;
+        $offsetY = 25000;
 
         $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <xdr:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
@@ -129,17 +136,17 @@ class XLSWriterPlus extends XLSXWriter
                         <xdr:row>' . $imageOptions['startRowNum'] . '</xdr:row>
                         <xdr:rowOff>0</xdr:rowOff>
                     </xdr:from>
-                    <xdr:to>
+                    <xdr:to>' . $imageOptions['endColNum'] . '
                         <xdr:col>' . $imageOptions['endColNum'] . '</xdr:col>
-                        <xdr:colOff>' . $width . '</xdr:colOff>
+                        <xdr:colOff>' . $offsetX . '</xdr:colOff>
                         <xdr:row>' . $imageOptions['endRowNum'] . '</xdr:row>
-                        <xdr:rowOff>' . $height . '</xdr:rowOff>
+                        <xdr:rowOff>' . $offsetY . '</xdr:rowOff>
                     </xdr:to>
                     <xdr:pic>
                         <xdr:nvPicPr>
                             <xdr:cNvPr id="2" name="Picture ' . $imageId . '" />
                             <xdr:cNvPicPr>
-                              <a:picLocks noChangeAspect="1"/>
+                              <a:picLocks noChangeAspect="0"/>
                             </xdr:cNvPicPr>
                         </xdr:nvPicPr>
                         <xdr:blipFill>
@@ -152,10 +159,6 @@ class XLSWriterPlus extends XLSXWriter
                             </a:blip>
                         </xdr:blipFill>
                         <xdr:spPr>
-                            <a:xfrm>
-                                <a:off x="0" y="0"/>
-                                <a:ext cx="' . $width . '" cy="' . $height . '" />
-                            </a:xfrm>
                             <a:prstGeom prst="rect">
                                 <a:avLst />
                             </a:prstGeom>
