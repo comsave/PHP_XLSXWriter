@@ -201,13 +201,14 @@ class XLSWriterPlus extends XLSXWriter
         foreach ($this->sheets as $sheet_name => $sheet) {
             $content_types_xml .= '<Override PartName="/xl/worksheets/' . ($sheet->xmlname) . '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
         }
-        if (count($this->images) > 0) {
-            foreach ($this->images as $imageId => $imagePath) {
-                $content_types_xml .= '<Override PartName="/xl/drawings/drawing' . $imageId . '.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml" />';
-            }
-        }
         $content_types_xml .= '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>';
         $content_types_xml .= '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>';
+        if (count($this->images) > 0) {
+            $i = 1;
+            foreach ($this->sheets as $sheet_name => $sheet) {
+                $content_types_xml .= '<Override PartName="/xl/drawings/drawing' . ($i++) . '.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml" />';
+            }
+        }
         $content_types_xml .= '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>';
         $content_types_xml .= '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>';
         $content_types_xml .= "\n";
