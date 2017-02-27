@@ -21,7 +21,7 @@ class XLSWriterPlus extends XLSXWriter
     {
         $this->images[$imageId] = $imagePath;
 
-        if(empty($imageOptions)){
+        if (empty($imageOptions)) {
             $imageOptions = [
                 'startColNum' => 0,
                 'endColNum' => 0,
@@ -88,17 +88,22 @@ class XLSWriterPlus extends XLSXWriter
 
                 $zip->addFile($imagePath, 'xl/media/' . $imageName);
 
-                $zip->addFromString("xl/drawings/drawing" . $imageId . ".xml", $this->buildDrawingXML($imagePath, $imageId));
-                $zip->addFromString("xl/drawings/_rels/drawing" . $imageId . ".xml.rels", $this->buildDrawingRelationshipXML());
+                $i = 1;
+                foreach ($this->sheets as $sheet) {
+                    $zip->addFromString("xl/drawings/drawing" . $i . ".xml", $this->buildDrawingXML($imagePath, $imageId));
+                    $zip->addFromString("xl/drawings/_rels/drawing" . $i . ".xml.rels", $this->buildDrawingRelationshipXML());
+                    $i++;
+                }
             }
         }
 
         $zip->addEmptyDir("xl/worksheets/");
         $zip->addEmptyDir("xl/worksheets/_rels/");
 
+        $i = 1;
         foreach ($this->sheets as $sheet) {
             $zip->addFile($sheet->filename, "xl/worksheets/" . $sheet->xmlname);
-            $zip->addFromString("xl/worksheets/_rels/" . $sheet->xmlname . '.rels', $this->buildSheetRelationshipXML());
+            $zip->addFromString("xl/worksheets/_rels/" . $sheet->xmlname . '.rels', $this->buildSheetRelationshipXML($i++));
         }
 
         $zip->addFromString("xl/workbook.xml", $this->buildWorkbookXML());
@@ -127,9 +132,12 @@ class XLSWriterPlus extends XLSXWriter
         $offsetX = round($cellWidth * ($ratio - floor($ratio))) + 115000;
         $offsetY = 25000;
 
-        $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-            <xdr:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-                <xdr:twoCellAnchor>
+        $cX = 2419350;
+        $cY = 790575;
+
+        $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8"?>
+            <xdr:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing">
+                <xdr:twoCellAnchor editAs="oneCell">
                     <xdr:from>
                         <xdr:col>' . $imageOptions['startColNum'] . '</xdr:col>
                         <xdr:colOff>0</xdr:colOff>
@@ -150,21 +158,28 @@ class XLSWriterPlus extends XLSXWriter
                             </xdr:cNvPicPr>
                         </xdr:nvPicPr>
                         <xdr:blipFill>
-                            <a:blip r:embed="rId' . $imageId . '">
-                              <a:extLst>
-                                <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
-                                  <a14:useLocalDpi val="0"/>
-                                </a:ext>
-                              </a:extLst>
-                            </a:blip>
-                        </xdr:blipFill>
-                        <xdr:spPr>
-                            <a:prstGeom prst="rect">
-                                <a:avLst />
-                            </a:prstGeom>
-                        </xdr:spPr>
+                        <a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId' . $imageId . '">
+                          <a:extLst>
+                            <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
+                              <a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0"/>
+                            </a:ext>
+                          </a:extLst>
+                        </a:blip>
+                        <a:stretch>
+                          <a:fillRect/>
+                        </a:stretch>
+                      </xdr:blipFill>
+                      <xdr:spPr>
+                        <a:xfrm>
+                          <a:off x="0" y="0"/>
+                          <a:ext cx="' . $cX . '" cy="' . $cY . '"/>
+                        </a:xfrm>
+                        <a:prstGeom prst="rect">
+                          <a:avLst/>
+                        </a:prstGeom>
+                      </xdr:spPr>
                     </xdr:pic>
-                    <xdr:clientData />
+                    <xdr:clientData/>
                 </xdr:twoCellAnchor>
             </xdr:wsDr>
         ';
@@ -266,9 +281,10 @@ class XLSWriterPlus extends XLSXWriter
     }
 
     /**
+     * @param int $sheetId
      * @return string
      */
-    public function buildSheetRelationshipXML()
+    public function buildSheetRelationshipXML($sheetId)
     {
         $lastRelationshipId = 0;
 
@@ -278,7 +294,7 @@ class XLSWriterPlus extends XLSXWriter
 
         if (count($this->images) > 0) {
             foreach ($this->images as $imageId => $imagePath) {
-                $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing' . $imageId . '.xml"/>';
+                $rels_xml .= '<Relationship Id="rId' . (++$lastRelationshipId) . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing' . $sheetId . '.xml"/>';
             }
         }
 
