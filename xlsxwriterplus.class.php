@@ -69,10 +69,6 @@ class XLSWriterPlus extends XLSXWriter
             return;
         }
 
-        $zip->addEmptyDir("docProps/");
-        $zip->addFromString("docProps/app.xml", $this->buildAppXML());
-        $zip->addFromString("docProps/core.xml", $this->buildCoreXML());
-
         $zip->addEmptyDir("_rels/");
         $zip->addFromString("_rels/.rels", $this->buildRelationshipsXML());
 
@@ -196,21 +192,18 @@ class XLSWriterPlus extends XLSXWriter
         $content_types_xml .= '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">';
         $content_types_xml .= '<Default ContentType="application/xml" Extension="xml"/>';
         $content_types_xml .= '<Default ContentType="image/png" Extension="png"/>';
-        $content_types_xml .= '<Override PartName="/_rels/.rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>';
-        $content_types_xml .= '<Override PartName="/xl/_rels/workbook.xml.rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>';
+        $content_types_xml .= '<Default ContentType="application/vnd.openxmlformats-package.relationships+xml" Extension="rels"/>';
         foreach ($this->sheets as $sheet_name => $sheet) {
             $content_types_xml .= '<Override PartName="/xl/worksheets/' . ($sheet->xmlname) . '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
         }
-        $content_types_xml .= '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>';
         $content_types_xml .= '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>';
+        $content_types_xml .= '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>';
         if (count($this->images) > 0) {
             $i = 1;
             foreach ($this->sheets as $sheet_name => $sheet) {
                 $content_types_xml .= '<Override PartName="/xl/drawings/drawing' . ($i++) . '.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml" />';
             }
         }
-        $content_types_xml .= '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>';
-        $content_types_xml .= '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>';
         $content_types_xml .= "\n";
         $content_types_xml .= '</Types>';
 
