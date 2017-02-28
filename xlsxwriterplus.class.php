@@ -13,6 +13,27 @@ class XLSWriterPlus extends XLSXWriter
     private $imageOptions = [];
 
     /**
+     * @var array
+     */
+    private $ignoredErrorsCells = [];
+
+    /**
+     * @return array
+     */
+    public function getIgnoredErrorsCells()
+    {
+        return $this->ignoredErrorsCells;
+    }
+
+    /**
+     * @param array $ignoredErrorsCells
+     */
+    public function setIgnoredErrorsCells($ignoredErrorsCells)
+    {
+        $this->ignoredErrorsCells = $ignoredErrorsCells;
+    }
+
+    /**
      * @param string $imagePath
      * @param array $imageOptions
      * @param int $imageId
@@ -237,7 +258,13 @@ class XLSWriterPlus extends XLSXWriter
         $sheet->file_writer->write('<oddHeader>&amp;C&amp;&quot;Times New Roman,Regular&quot;&amp;12&amp;A</oddHeader>');
         $sheet->file_writer->write('<oddFooter>&amp;C&amp;&quot;Times New Roman,Regular&quot;&amp;12Page &amp;P</oddFooter>');
         $sheet->file_writer->write('</headerFooter>');
-
+        if(count($this->getIgnoredErrorsCells()) > 0){
+            $sheet->file_writer->write('<ignoredErrors>');
+            foreach($this->getIgnoredErrorsCells() as $ignoredErrorsCell) {
+                $sheet->file_writer->write('<ignoredError sqref="' . $ignoredErrorsCell . '" numberStoredAsText="1"/>');
+            }
+            $sheet->file_writer->write('</ignoredErrors>');
+        }
         if (count($this->images) > 0) {
             foreach ($this->images as $imageId => $imagePath) {
                 $sheet->file_writer->write('<drawing r:id="rId' . $imageId . '" />');
