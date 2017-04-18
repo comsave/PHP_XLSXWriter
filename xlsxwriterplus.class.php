@@ -68,7 +68,8 @@ class XLSWriterPlus extends XLSXWriter
     }
 
     /**
-     * @param string $filename
+     * @param $filename
+     * @throws Exception
      */
     public function writeToFile($filename)
     {
@@ -80,19 +81,16 @@ class XLSWriterPlus extends XLSXWriter
             if (is_writable($filename)) {
                 @unlink($filename);
             } else {
-                $this->log("Error in " . __CLASS__ . "::" . __FUNCTION__ . ", file is not writeable.");
-                return;
+                throw new \Exception("Error in " . __CLASS__ . "::" . __FUNCTION__ . ", file is not writeable.");
             }
         }
 
         $zip = new \ZipArchive();
         if (empty($this->sheets)) {
-            $this->log("Error in " . __CLASS__ . "::" . __FUNCTION__ . ", no worksheets defined.");
-            return;
+            throw new \Exception("Error in " . __CLASS__ . "::" . __FUNCTION__ . ", no worksheets defined.");
         }
         if (!$zip->open($filename, \ZipArchive::CREATE)) {
-            $this->log("Error in " . __CLASS__ . "::" . __FUNCTION__ . ", unable to create zip.");
-            return;
+            throw new \Exception("Error in " . __CLASS__ . "::" . __FUNCTION__ . ", unable to create zip.");
         }
 
         $zip->addEmptyDir("_rels/");
