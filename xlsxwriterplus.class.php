@@ -37,9 +37,16 @@ class XLSWriterPlus extends XLSXWriter
      * @param string $imagePath
      * @param array $imageOptions
      * @param int $imageId
+     * @throws Exception
      */
     public function addImage($imagePath, $imageId, $imageOptions = [])
     {
+        $imagePath = getcwd() . '/' . $imagePath;
+
+        if(!file_exists($imagePath)){
+            throw new Exception(sprintf('File %s not found.', $imagePath));
+        }
+
         $this->images[$imageId] = $imagePath;
 
         if (empty($imageOptions)) {
