@@ -34,6 +34,14 @@ class XLSWriterPlus extends XLSXWriter
     }
 
     /**
+     * @return array
+     */
+    public function getSheets()
+    {
+        return $this->sheets;
+    }
+
+    /**
      * @param string $imagePath
      * @param array $imageOptions
      * @param int $imageId
