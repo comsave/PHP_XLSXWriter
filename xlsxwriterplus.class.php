@@ -55,15 +55,12 @@ class XLSWriterPlus extends XLSXWriter
 
         $this->images[$imageId] = $imagePath;
 
-        if (empty($imageOptions)) {
-            $imageOptions = [
-                'startColNum' => 0,
-                'endColNum' => 0,
-                'startRowNum' => 0,
-                'endRowNum' => 0
-            ];
-        }
-        $this->imageOptions[$imageId] = $imageOptions;
+        $this->imageOptions[$imageId] = array_merge([
+            'startColNum' => 0,
+            'endColNum' => 0,
+            'startRowNum' => 0,
+            'endRowNum' => 0,
+        ], $imageOptions);
     }
 
     public function writeToString()
@@ -150,18 +147,16 @@ class XLSWriterPlus extends XLSXWriter
      */
     public function buildDrawingXML($imagePath, $imageId)
     {
-        $cellWidth = 875000;
-        $cellHeight = 170000;
-
         $imageOptions = $this->imageOptions[$imageId];
         list($width, $height) = getimagesize($imagePath);
-        $ratio = $width / $height;
 
-        $offsetX = round($cellWidth * ($ratio - floor($ratio))) + 115000;
-        $offsetY = 25000;
+        if($imageOptions['endColNum'] == 0 && $imageOptions['endRowNum'] == 0) {
+            $imageOptions['endColNum'] = round($height / 71.428);
+            $imageOptions['endRowNum'] = round($width / 12.82);
+        }
 
-        $cX = 2419350;
-        $cY = 790575;
+        $endColOffset = round($width * 431.8);
+        $endRowOffset = round($height * 86.358);
 
         $imageRelationshipXML = '<?xml version="1.0" encoding="UTF-8"?>
             <xdr:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing">
@@ -172,15 +167,15 @@ class XLSWriterPlus extends XLSXWriter
                         <xdr:row>' . $imageOptions['startRowNum'] . '</xdr:row>
                         <xdr:rowOff>0</xdr:rowOff>
                     </xdr:from>
-                    <xdr:to>' . $imageOptions['endColNum'] . '
+                    <xdr:to>
                         <xdr:col>' . $imageOptions['endColNum'] . '</xdr:col>
-                        <xdr:colOff>' . $offsetX . '</xdr:colOff>
+                        <xdr:colOff>' . $endColOffset . '</xdr:colOff>
                         <xdr:row>' . $imageOptions['endRowNum'] . '</xdr:row>
-                        <xdr:rowOff>' . $offsetY . '</xdr:rowOff>
+                        <xdr:rowOff>' . $endRowOffset . '</xdr:rowOff>
                     </xdr:to>
                     <xdr:pic>
                         <xdr:nvPicPr>
-                            <xdr:cNvPr id="2" name="Picture ' . $imageId . '" />
+                            <xdr:cNvPr id="' . $imageId . '" name="Picture ' . $imageId . '" />
                             <xdr:cNvPicPr>
                               <a:picLocks noChangeAspect="0"/>
                             </xdr:cNvPicPr>
@@ -193,19 +188,8 @@ class XLSWriterPlus extends XLSXWriter
                             </a:ext>
                           </a:extLst>
                         </a:blip>
-                        <a:stretch>
-                          <a:fillRect/>
-                        </a:stretch>
-                      </xdr:blipFill>
-                      <xdr:spPr>
-                        <a:xfrm>
-                          <a:off x="0" y="0"/>
-                          <a:ext cx="' . $cX . '" cy="' . $cY . '"/>
-                        </a:xfrm>
-                        <a:prstGeom prst="rect">
-                          <a:avLst/>
-                        </a:prstGeom>
-                      </xdr:spPr>
+                        </xdr:blipFill>
+                        <xdr:spPr />
                     </xdr:pic>
                     <xdr:clientData/>
                 </xdr:twoCellAnchor>
